@@ -1,0 +1,439 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#111713">
+<title>Midas — Take Control of Your Money</title>
+<style>
+:root {
+  --bg:#101511; --panel:#191f1a; --line:#2b342c;
+  --gold:#d9b65d; --text:#f3f3ec; --muted:#9da79c;
+  --green:#a5d6a7; --red:#f19b91;
+}
+* { box-sizing:border-box; }
+body {
+  margin:0; background:var(--bg); color:var(--text);
+  font:15px/1.5 system-ui,-apple-system,sans-serif;
+}
+header {
+  padding:24px 20px 18px; border-bottom:1px solid var(--line);
+  display:flex; justify-content:space-between; align-items:center;
+}
+.brand { display:flex; align-items:center; gap:10px; }
+.logo {
+  background:var(--gold); color:#161911; border-radius:12px;
+  width:40px; height:40px; display:grid; place-items:center;
+  font-size:22px; font-weight:900;
+}
+h1 { font-size:21px; margin:0; letter-spacing:3px; }
+.tagline { font-size:11px; color:var(--muted); }
+select,input,button { font:inherit; }
+select,input {
+  background:#101511; color:var(--text); border:1px solid var(--line);
+  border-radius:10px; padding:11px; width:100%; min-width:0;
+}
+.currency { width:auto; max-width:105px; }
+main { max-width:850px; padding:22px 16px 50px; margin:auto; }
+.eyebrow {
+  color:var(--gold); text-transform:uppercase;
+  letter-spacing:2px; font-size:11px; font-weight:700;
+}
+h2 { font-size:21px; margin:4px 0 16px; }
+h3 { font-size:15px; margin:0 0 12px; }
+.grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+.card {
+  background:var(--panel); border:1px solid var(--line);
+  border-radius:16px; padding:17px; min-width:0;
+}
+.balance { grid-column:1/-1; padding:22px; }
+.big { font-size:clamp(27px,7vw,38px); font-weight:750; letter-spacing:-1px; overflow-wrap:anywhere; }
+.label { font-size:12px; color:var(--muted); }
+.amount { font-size:20px; font-weight:700; margin-top:7px; overflow-wrap:anywhere; }
+.gold { color:var(--gold); }
+.green { color:var(--green); }
+.red { color:var(--red); }
+.section { margin-top:28px; }
+.row { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.row + .row { margin-top:12px; }
+button {
+  background:var(--gold); color:#191911; border:0; border-radius:10px;
+  padding:11px 15px; font-weight:700; cursor:pointer;
+}
+button.secondary { background:#293129; color:var(--text); border:1px solid var(--line); }
+button.danger { background:transparent; color:var(--red); padding:6px; }
+form { display:grid; gap:10px; }
+.formgrid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.full { grid-column:1/-1; }
+.list { display:grid; gap:9px; margin-top:14px; }
+.item {
+  display:flex; align-items:center; justify-content:space-between;
+  gap:12px; padding:12px; background:#121713;
+  border:1px solid var(--line); border-radius:11px;
+}
+.item-info { min-width:0; overflow-wrap:anywhere; }
+.item-title { font-weight:650; }
+.item-sub { font-size:12px; color:var(--muted); }
+.item-right { text-align:right; flex-shrink:0; }
+.empty { color:var(--muted); text-align:center; padding:18px 5px; font-size:13px; }
+.smallbtn { padding:6px 9px; font-size:12px; margin-top:5px; }
+.progress { height:7px; background:#303730; border-radius:9px; overflow:hidden; margin-top:12px; }
+.bar { height:100%; width:0; background:var(--gold); transition:width .2s; }
+.note { color:var(--muted); font-size:12px; margin-top:12px; }
+footer { color:var(--muted); font-size:12px; text-align:center; margin-top:30px; }
+@media(min-width:650px) {
+  .grid { grid-template-columns:repeat(3,minmax(0,1fr)); }
+  .balance { grid-column:span 2; }
+}
+@media(max-width:380px) {
+  .formgrid { grid-template-columns:1fr; }
+  .full { grid-column:auto; }
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <div class="logo">M</div>
+    <div>
+      <h1>MIDAS</h1>
+      <div class="tagline">Take control of your money.</div>
+    </div>
+  </div>
+  <select id="currency" class="currency" aria-label="Currency">
+    <option value="USD">USD $</option>
+    <option value="PHP">PHP ₱</option>
+    <option value="EUR">EUR €</option>
+    <option value="GBP">GBP £</option>
+    <option value="JPY">JPY ¥</option>
+    <option value="INR">INR ₹</option>
+    <option value="AUD">AUD $</option>
+    <option value="CAD">CAD $</option>
+    <option value="SGD">SGD $</option>
+  </select>
+</header>
+
+<main>
+  <div class="eyebrow">Your financial overview</div>
+  <h2>Know where you stand.</h2>
+
+  <div class="grid">
+    <section class="card balance">
+      <div class="label">Safe to spend</div>
+      <div class="big gold" id="safe">$0.00</div>
+      <div class="note" id="safeNote">Add your income, expenses and bills to get started.</div>
+    </section>
+    <section class="card">
+      <div class="label">Available balance</div>
+      <div class="amount" id="balance">$0.00</div>
+      <div class="label">Income minus expenses</div>
+    </section>
+    <section class="card">
+      <div class="label">Total income</div>
+      <div class="amount green" id="incomeTotal">$0.00</div>
+    </section>
+    <section class="card">
+      <div class="label">Total expenses</div>
+      <div class="amount red" id="expenseTotal">$0.00</div>
+    </section>
+    <section class="card">
+      <div class="label">Unpaid bills</div>
+      <div class="amount" id="billTotal">$0.00</div>
+    </section>
+    <section class="card">
+      <div class="label">Safety buffer</div>
+      <label class="note" for="buffer">Money to keep untouched</label>
+      <input id="buffer" type="number" min="0" step="0.01" value="0" style="margin-top:8px">
+    </section>
+  </div>
+
+  <section class="section card">
+    <h3>Add a transaction</h3>
+    <form id="transactionForm">
+      <div class="formgrid">
+        <div>
+          <label class="label" for="type">Transaction type</label>
+          <select id="type">
+            <option value="expense">Expense</option>
+            <option value="income">Income</option>
+          </select>
+        </div>
+        <div>
+          <label class="label" for="amount">Amount</label>
+          <input id="amount" type="number" min="0.01" step="0.01" placeholder="0.00" required>
+        </div>
+        <div class="full">
+          <label class="label" for="description">Description</label>
+          <input id="description" maxlength="100" placeholder="e.g. Salary, groceries" required>
+        </div>
+        <div class="full">
+          <label class="label" for="transactionDate">Date</label>
+          <input id="transactionDate" type="date" required>
+        </div>
+      </div>
+      <button type="submit">+ Add transaction</button>
+    </form>
+  </section>
+
+  <section class="section card">
+    <div class="row">
+      <h3>Recent transactions</h3>
+      <button class="secondary" id="clearTransactions" type="button">Clear all</button>
+    </div>
+    <div id="transactions" class="list">
+      <div class="empty">Your transactions will appear here.</div>
+    </div>
+  </section>
+
+  <section class="section card">
+    <h3>Upcoming bills</h3>
+    <form id="billForm">
+      <div class="formgrid">
+        <div class="full">
+          <label class="label" for="billName">Bill name</label>
+          <input id="billName" maxlength="100" placeholder="e.g. Electricity" required>
+        </div>
+        <div>
+          <label class="label" for="billAmount">Amount</label>
+          <input id="billAmount" type="number" min="0.01" step="0.01" placeholder="0.00" required>
+        </div>
+        <div>
+          <label class="label" for="billDate">Due date</label>
+          <input id="billDate" type="date" required>
+        </div>
+      </div>
+      <button type="submit">+ Add bill</button>
+    </form>
+    <div id="bills" class="list">
+      <div class="empty">No bills added yet.</div>
+    </div>
+  </section>
+
+  <section class="section card">
+    <h3>Build your safety net</h3>
+    <div class="label">Emergency fund goal</div>
+    <form id="goalForm" style="margin-top:10px">
+      <div class="formgrid">
+        <div>
+          <label class="label" for="goal">Savings goal</label>
+          <input id="goal" type="number" min="0" step="0.01" value="1000">
+        </div>
+        <div>
+          <label class="label" for="saved">Already saved</label>
+          <input id="saved" type="number" min="0" step="0.01" value="0">
+        </div>
+      </div>
+      <button type="submit">Update savings</button>
+    </form>
+    <div class="row" style="margin-top:18px">
+      <span class="label" id="goalText">0% of goal reached</span>
+      <span class="label" id="goalAmounts">0 / 1000</span>
+    </div>
+    <div class="progress"><div class="bar" id="goalBar"></div></div>
+  </section>
+
+  <footer>
+    Your money, your decisions. Midas is a budgeting tool, not financial advice.
+    <br>Data is stored in this browser on this device.
+  </footer>
+</main>
+
+<script>
+(function () {
+  const $ = id => document.getElementById(id);
+  const KEY = "midas-app-v1";
+  const today = new Date();
+  const dateString = d =>
+    `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+
+  let state = { transactions: [], bills: [], buffer: 0, goal: 1000, saved: 0, currency: "USD" };
+
+  try {
+    const stored = JSON.parse(localStorage.getItem(KEY));
+    if (stored && typeof stored === "object") {
+      state = { ...state, ...stored };
+      if (!Array.isArray(state.transactions)) state.transactions = [];
+      if (!Array.isArray(state.bills)) state.bills = [];
+    }
+  } catch (_) {}
+
+  $("transactionDate").value = dateString(today);
+  $("billDate").value = dateString(today);
+  $("currency").value = state.currency;
+  $("buffer").value = state.buffer;
+  $("goal").value = state.goal;
+  $("saved").value = state.saved;
+
+  function money(value) {
+    try {
+      return new Intl.NumberFormat(undefined, {
+        style: "currency", currency: state.currency,
+        maximumFractionDigits: 2
+      }).format(value);
+    } catch (_) {
+      return state.currency + " " + Number(value).toFixed(2);
+    }
+  }
+
+  function save() {
+    try {
+      localStorage.setItem(KEY, JSON.stringify(state));
+    } catch (_) {
+      alert("Your browser could not save the data. Check your browser storage settings.");
+    }
+    render();
+  }
+
+  function el(tag, className, text) {
+    const node = document.createElement(tag);
+    if (className) node.className = className;
+    if (text !== undefined) node.textContent = text;
+    return node;
+  }
+
+  function makeButton(text, className, action) {
+    const b = el("button", className, text);
+    b.type = "button";
+    b.addEventListener("click", action);
+    return b;
+  }
+
+  function render() {
+    const income = state.transactions
+      .filter(t => t.type === "income")
+      .reduce((sum, t) => sum + Number(t.amount), 0);
+    const expenses = state.transactions
+      .filter(t => t.type === "expense")
+      .reduce((sum, t) => sum + Number(t.amount), 0);
+    const balance = income - expenses;
+    const unpaid = state.bills
+      .filter(b => !b.paid)
+      .reduce((sum, b) => sum + Number(b.amount), 0);
+    const safe = balance - unpaid - Number(state.buffer || 0);
+
+    $("incomeTotal").textContent = money(income);
+    $("expenseTotal").textContent = money(expenses);
+    $("balance").textContent = money(balance);
+    $("billTotal").textContent = money(unpaid);
+    $("safe").textContent = money(safe);
+    $("safe").className = "big " + (safe < 0 ? "red" : "gold");
+    $("safeNote").textContent = safe < 0
+      ? "Your planned commitments exceed your recorded balance."
+      : "After unpaid bills and your safety buffer.";
+
+    const tx = $("transactions");
+    tx.replaceChildren();
+    if (!state.transactions.length) {
+      tx.append(el("div", "empty", "No transactions yet. Add your first one above."));
+    }
+    [...state.transactions].reverse().forEach(t => {
+      const row = el("div", "item");
+      const info = el("div", "item-info");
+      info.append(el("div", "item-title", t.description));
+      info.append(el("div", "item-sub", t.date));
+      const right = el("div", "item-right");
+      right.append(el("div", t.type === "income" ? "green" : "red",
+        (t.type === "income" ? "+" : "−") + money(Number(t.amount))));
+      right.append(makeButton("Delete", "danger", () => {
+        state.transactions = state.transactions.filter(x => x.id !== t.id);
+        save();
+      }));
+      row.append(info, right);
+      tx.append(row);
+    });
+
+    const bills = $("bills");
+    bills.replaceChildren();
+    if (!state.bills.length) bills.append(el("div", "empty", "No bills added yet."));
+    [...state.bills].sort((a,b) => a.date.localeCompare(b.date)).forEach(b => {
+      const row = el("div", "item");
+      const info = el("div", "item-info");
+      info.append(el("div", "item-title", b.name));
+      info.append(el("div", "item-sub", (b.paid ? "Paid" : "Due") + " · " + b.date));
+      const right = el("div", "item-right");
+      right.append(el("div", b.paid ? "green" : "", money(Number(b.amount))));
+      right.append(makeButton(b.paid ? "Mark unpaid" : "Mark paid", "secondary smallbtn", () => {
+        b.paid = !b.paid;
+        save();
+      }));
+      right.append(makeButton("Delete", "danger", () => {
+        state.bills = state.bills.filter(x => x.id !== b.id);
+        save();
+      }));
+      row.append(info, right);
+      bills.append(row);
+    });
+
+    const goal = Math.max(0, Number(state.goal) || 0);
+    const saved = Math.max(0, Number(state.saved) || 0);
+    const pct = goal > 0 ? Math.min(100, saved / goal * 100) : (saved > 0 ? 100 : 0);
+    $("goalText").textContent = Math.round(pct) + "% of goal reached";
+    $("goalAmounts").textContent = money(saved) + " / " + money(goal);
+    $("goalBar").style.width = pct + "%";
+  }
+
+  $("transactionForm").addEventListener("submit", e => {
+    e.preventDefault();
+    const amount = Number($("amount").value);
+    const description = $("description").value.trim();
+    if (!description || !Number.isFinite(amount) || amount <= 0) return;
+    state.transactions.push({
+      id: Date.now() + Math.random(),
+      type: $("type").value,
+      amount,
+      description,
+      date: $("transactionDate").value || dateString(today)
+    });
+    e.target.reset();
+    $("transactionDate").value = dateString(today);
+    save();
+  });
+
+  $("billForm").addEventListener("submit", e => {
+    e.preventDefault();
+    const amount = Number($("billAmount").value);
+    const name = $("billName").value.trim();
+    if (!name || !Number.isFinite(amount) || amount <= 0) return;
+    state.bills.push({
+      id: Date.now() + Math.random(),
+      name,
+      amount,
+      date: $("billDate").value || dateString(today),
+      paid: false
+    });
+    e.target.reset();
+    $("billDate").value = dateString(today);
+    save();
+  });
+
+  $("buffer").addEventListener("change", () => {
+    state.buffer = Math.max(0, Number($("buffer").value) || 0);
+    $("buffer").value = state.buffer;
+    save();
+  });
+
+  $("goalForm").addEventListener("submit", e => {
+    e.preventDefault();
+    state.goal = Math.max(0, Number($("goal").value) || 0);
+    state.saved = Math.max(0, Number($("saved").value) || 0);
+    save();
+  });
+
+  $("currency").addEventListener("change", () => {
+    state.currency = $("currency").value;
+    save();
+  });
+
+  $("clearTransactions").addEventListener("click", () => {
+    if (state.transactions.length && confirm("Delete all transactions? This cannot be undone.")) {
+      state.transactions = [];
+      save();
+    }
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
